@@ -18,4 +18,6 @@ def get_gif_url(query: str, client_key: str) -> str:
     gifs = []
     for data in top8_gifs['results']:
         gifs.append(data['media_formats']['gif']['url'])
+    if len(gifs) == 0:
+        return ""
     return random.choice(gifs)

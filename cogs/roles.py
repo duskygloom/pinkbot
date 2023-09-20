@@ -9,11 +9,13 @@ class Roles(commands.Cog):
         super().__init__()
         self.bot = bot
 
-    @commands.command(name="assign_roles", 
-             description="Assign roles to others... if you are permitted to.",
-             usage="$assign_roles member1 member2 ... role1 role2 ...",
-             brief="Assign roles to others.",
-             help="Assign roles to others, if only you are permitted to modify roles yourself.")
+    @commands.command(
+            name="assign_roles", 
+            description="Assign roles to others... if you are permitted to.",
+            usage="$assign_roles member1 member2 ... role1 role2 ...",
+            brief="Assign roles to others.",
+            help="Assign roles to others, if only you are permitted to modify roles yourself."
+    )
     async def assign_roles(
             self, ctx: context_type, 
             members: commands.Greedy[discord.Member], 
@@ -37,11 +39,13 @@ class Roles(commands.Cog):
         else:
             logging.error(error)
 
-    @commands.command(name="remove_roles", 
-                description="Removes roles from others... if you are permitted to.",
-                usage="$remove_roles member1 member2 ... role1 role2 ...",
-                brief="Removes roles from others.",
-                help="Removes roles from others, if only you are permitted to modify roles yourself.")
+    @commands.command(
+            name="remove_roles", 
+            description="Removes roles from others... if you are permitted to.",
+            usage="$remove_roles member1 member2 ... role1 role2 ...",
+            brief="Removes roles from others.",
+            help="Removes roles from others, if only you are permitted to modify roles yourself."
+    )
     async def remove_roles(
             self, ctx: context_type, 
             members: commands.Greedy[discord.Member], 

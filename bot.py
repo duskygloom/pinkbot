@@ -1,7 +1,7 @@
 import discord
 from cogs.general import General
 from cogs.roles import Roles
-from cogs.giffy import Giffy
+from cogs.gifs import Gifs
 from cogs.nsfw import NSFW
 from discord.ext import commands
 from utils.general import get_gif_url, get_member_name
@@ -35,5 +35,5 @@ async def create_bot(
 async def load_cogs(bot: commands.Bot):
     await bot.add_cog(General(bot))
     await bot.add_cog(Roles(bot))
-    await bot.add_cog(Giffy(bot))
+    await bot.add_cog(Gifs(bot))
     await bot.add_cog(NSFW(bot))

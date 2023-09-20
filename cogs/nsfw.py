@@ -9,12 +9,14 @@ class NSFW(commands.Cog):
         super().__init__()
         self.bot = bot
 
-    @commands.command(name="onlyfans",
-                      description="Sending onlyfans content~",
-                      usage="$onlyfans [post] [timeout] 'username'",
-                      brief="Sends onlyfans posts.",
-                      help="Sends onlyfans post of username.")
-    async def onlyfans(self, ctx: context_type, post: typing.Optional[int] = 1, timeout: typing.Optional[int] = 60, username: str = ""):
+    @commands.command(
+            name="onlyfans",
+            description="Sending onlyfans content~",
+            usage="$onlyfans [post] [timeout] 'username'",
+            brief="Sends onlyfans posts.",
+            help="Sends onlyfans post of username."
+    )
+    async def onlyfans(self, ctx: context_type, post: typing.Optional[int] = 1, timeout: typing.Optional[int] = 60, *, username: str = ""):
         await ctx.message.add_reaction('⏳')
         if username == "":
             username = get_random_username()
@@ -22,10 +24,13 @@ class NSFW(commands.Cog):
         # handling abnormal conditions
         if codes == ScrappingStatus.username_not_found:
             await ctx.reply(f"Could not find the user: {username}.", mention_author=False)
+            return
         elif codes == ScrappingStatus.website_not_found:
             await ctx.reply(f"Could not find website.", mention_author=False)
+            return
         elif codes == ScrappingStatus.could_not_connect:
             await ctx.reply(f"Could not connect to the website.", mention_author=False)
+            return
         await ctx.message.remove_reaction('⏳', member=self.bot.user)
         await ctx.message.add_reaction('😇')
         # yielding codes
