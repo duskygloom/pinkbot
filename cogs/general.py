@@ -41,15 +41,16 @@ class General(commands.Cog):
                       usage="$spam [number] what to spam",
                       brief="Spam helper.",
                       help="Repeats the text maximum of 10 times.")
-    async def spam(self, ctx: context_type, number: typing.Optional[int] = 0, *, text: str):
+    async def spam(self, ctx: context_type, number: typing.Optional[int] = 10, *words: str):
         if not ctx.author.guild_permissions.administrator:
             await ctx.send("Only administrators are allowed to spam!")
             return
         greater_than_ten = number > 10
         number = int(greater_than_ten)*10 + int(not greater_than_ten)*number
         await ctx.message.add_reaction('⏳')
+        sentence = ' '.join(words)
         for i in range(number):
-            await ctx.send(text)
+            await ctx.send(sentence)
             await asyncio.sleep(0.1)
         await ctx.message.remove_reaction('⏳', member=self.bot.user)
         await ctx.message.add_reaction('✅')
