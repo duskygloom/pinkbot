@@ -1,6 +1,6 @@
 import discord, logging
 from discord.ext import commands
-from utils.onlyfans import get_member_name
+from utils.general import get_member_name
 
 context_type = commands.Context
 
@@ -20,7 +20,7 @@ class Roles(commands.Cog):
             roles: commands.Greedy[discord.Role]
     ):
         if not ctx.author.guild_permissions.manage_roles:
-            await ctx.reply(f"You don't have the permission to manage roles, {get_member_name(ctx.author)}.", mention_author=False)
+            await ctx.reply("You don't have the permission to manage roles.", mention_author=False)
             return
         for member in members:
             for role in roles:
