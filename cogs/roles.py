@@ -1,6 +1,6 @@
 import discord, logging
 from discord.ext import commands
-from utils import get_member_name
+from utils.onlyfans import get_member_name
 
 context_type = commands.Context
 
