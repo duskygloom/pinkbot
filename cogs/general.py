@@ -45,8 +45,8 @@ class General(commands.Cog):
         if not ctx.author.guild_permissions.administrator:
             await ctx.send("Only administrators are allowed to spam!")
             return
-        greater_than_ten = number > 10
-        number = int(greater_than_ten)*10 + int(not greater_than_ten)*number
+        if number > 10:
+            number = 10
         await ctx.message.add_reaction('⏳')
         sentence = ' '.join(words)
         for i in range(number):
