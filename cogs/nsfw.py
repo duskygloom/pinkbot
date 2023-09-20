@@ -1,4 +1,4 @@
-import typing, requests, bs4, logging, discord, os
+import typing, logging, discord
 from discord.ext import commands
 from utils.onlyfans import *
 
