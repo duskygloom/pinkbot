@@ -42,17 +42,17 @@ class General(commands.Cog):
                       brief="Spam helper.",
                       help="Repeats the text maximum of 10 times.")
     async def spam(self, ctx: context_type, number: typing.Optional[int] = 0, *, text: str):
-        if ctx.author.guild_permissions.administrator:
-            greater_than_ten = number > 10
-            number = int(greater_than_ten)*10 + int(not greater_than_ten)*number
-            await ctx.message.add_reaction('⏳')
-            for i in range(number):
-                await asyncio.sleep(0.4)
-                await ctx.send(text)
-            await ctx.message.remove_reaction('⏳', member=self.bot.user)
-            await ctx.message.add_reaction('✅')
-        else:
+        if not ctx.author.guild_permissions.administrator:
             await ctx.send("Only administrators are allowed to spam!")
+            return
+        greater_than_ten = number > 10
+        number = int(greater_than_ten)*10 + int(not greater_than_ten)*number
+        await ctx.message.add_reaction('⏳')
+        for i in range(number):
+            await ctx.send(text)
+            await asyncio.sleep(0.1)
+        await ctx.message.remove_reaction('⏳', member=self.bot.user)
+        await ctx.message.add_reaction('✅')
 
     @commands.command(name="sleep",
                       description="Goodnight zzzZZZ",
@@ -74,13 +74,13 @@ class General(commands.Cog):
                       brief="Deletes the message you reply to.",
                       help="Deletes the message you reply to.")
     async def delete(self, ctx: context_type, *, reason: str = "No reason specified."):
-        if ctx.author.guild_permissions.manage_messages:
-            reference_id = ctx.message.reference.message_id
-            reference_msg = await ctx.channel.fetch_message(reference_id)
-            with open("deleted_messages.txt", "a") as f:
-                f.write(f"{datetime.datetime.now().isoformat()} {ctx.author}\n{reference_msg.author} at {reference_msg.created_at.isoformat()}: {reference_msg.content}")
-            await reference_msg.delete()
-            await ctx.message.add_reaction('👍')
-            await ctx.message.delete(delay=5)
-        else:
+        if not ctx.author.guild_permissions.manage_messages:
             await ctx.reply("You don't have permission to manage messages.", mention_author=False)
+            return
+        reference_id = ctx.message.reference.message_id
+        reference_msg = await ctx.channel.fetch_message(reference_id)
+        with open("deleted_messages.txt", "a") as f:
+            f.write(f"{datetime.datetime.now().isoformat()} {ctx.author}\n{reference_msg.author} at {reference_msg.created_at.isoformat()}: {reference_msg.content}\n")
+        await reference_msg.delete()
+        await ctx.message.add_reaction('👍')
+        await ctx.message.delete(delay=5)            

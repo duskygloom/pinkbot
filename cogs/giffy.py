@@ -1,6 +1,6 @@
 import discord, typing
 from discord.ext import commands
-from utils import get_gif_url, get_member_name
+from utils.general import get_gif_url, get_member_name
 
 context_type = commands.Context
 

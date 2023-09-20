@@ -1,5 +1,4 @@
-import secret, logging, asyncio
-import bot
+import secret, logging, asyncio, bot
 
 if __name__ == "__main__":
     try:

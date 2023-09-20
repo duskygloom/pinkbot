@@ -1,10 +1,10 @@
-import discord, logging
+import discord
 from cogs.general import General
 from cogs.roles import Roles
 from cogs.giffy import Giffy
 from cogs.nsfw import NSFW
 from discord.ext import commands
-from utils import get_gif_url, get_member_name
+from utils.general import get_gif_url, get_member_name
 
 context_type = commands.context.Context
 

@@ -1,4 +1,4 @@
-import discord, logging
+import discord, logging, asyncio
 from discord.ext import commands
 from utils.general import get_member_name
 
@@ -25,6 +25,7 @@ class Roles(commands.Cog):
         for member in members:
             for role in roles:
                 await member.add_roles(role)
+                await asyncio.sleep(0.1)
             await ctx.reply(f"Successfully assigned role(s) to {get_member_name(member)}.", mention_author=False)
 
     @assign_roles.error
@@ -51,6 +52,7 @@ class Roles(commands.Cog):
         for member in members:
             for role in roles:
                 await member.remove_roles(role)
+                await asyncio.sleep(0.1)
             await ctx.reply(f"Successfully removed role(s) from {get_member_name(member)}.", mention_author=False)            
 
     @remove_roles.error
@@ -80,9 +82,11 @@ class Roles(commands.Cog):
                 if role.name == name:
                     role_exists = True
                     await ctx.reply(f"Role '{name}' already exists.", mention_author=False)
+                    await asyncio.sleep(0.1)
                     break
             if not role_exists:
                 await ctx.guild.create_role(name=name)
+                await asyncio.sleep(0.1)
         await ctx.message.add_reaction('✅')
     
     @commands.command(
@@ -98,5 +102,6 @@ class Roles(commands.Cog):
             return
         for role in roles:
             await role.delete()
+            await asyncio.sleep(0.1)
         await ctx.message.add_reaction('✅')
         

@@ -1,4 +1,4 @@
-import typing, logging, discord
+import typing, logging, discord, asyncio
 from discord.ext import commands
 from utils.onlyfans import *
 
@@ -47,6 +47,7 @@ class NSFW(commands.Cog):
                 # reaction controls
                 await message.add_reaction('⏹️')
                 await message.add_reaction('▶️')
+                await asyncio.sleep(0.1)
                 await self.bot.wait_for("reaction_add", check=check_reaction, timeout=timeout)
                 message = await thread.fetch_message(post_id)
                 message_reactions = message.reactions
