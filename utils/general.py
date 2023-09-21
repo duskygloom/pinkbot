@@ -11,7 +11,7 @@ def get_member_name(member: discord.Member) -> str:
         name = member.display_name
     return name
 
-def get_gif_url(query: str, client_key: str) -> str | None:
+def get_gif_url(query: str, client_key: str) -> str:
     if tenor_api_key is None:
         return "" 
     limit = 8
