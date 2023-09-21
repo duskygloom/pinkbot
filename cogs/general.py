@@ -2,6 +2,7 @@ import typing, asyncio, datetime, logging, discord
 from discord.ext import commands
 
 context_type = commands.Context
+logging.basicConfig(level=logging.INFO)
 
 class General(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -112,13 +113,36 @@ class General(commands.Cog):
             await ctx.reply("You don't have permission to manage messages.", mention_author=False)
             return
         reference_id = ctx.message.reference.message_id
-        reference_msg = await ctx.channel.fetch_message(reference_id)
-        with open("deleted_messages.txt", "a") as f:
-            f.write(f"{datetime.datetime.now().isoformat()} {ctx.author}\n{reference_msg.author} at {reference_msg.created_at.isoformat()}: {reference_msg.content}\n")
-        await reference_msg.delete()
+        message = await ctx.channel.fetch_message(reference_id)
+        logging.info(f"Deleted message: {reference_id}\nSender: {message.content}\nContent: {message.content}\nReason: {reason}")
+        await message.delete()
         await ctx.message.add_reaction('✅')
         await ctx.message.delete(delay=4)
     
     @delete.error
     async def delete_error(self, ctx: context_type, error: discord.DiscordException):
+        logging.error(error)
+
+    @commands.command(
+            name="delete_thread",
+            description="Cleaning up this thread.",
+            usage="$delete_thread [reason for deleting]",
+            brief="Deletes the thread where the command is executed.",
+            help="Deletes the thread where the command is executed."
+    )
+    async def delete_thread(self, ctx: context_type, *, reason: str = "No reason specified."):
+        if not ctx.author.guild_permissions.manage_threads:
+            await ctx.reply("You don't have permission to manage threads.", mention_author=False)
+            return
+        elif not isinstance(ctx.channel, discord.Thread):
+            await ctx.reply("You are not in any thread.", mention_author=False)
+            return
+        thread_id = ctx.channel.id
+        await ctx.channel.delete()
+        logging.info(f"Deleted thread: {thread_id}\nReason: {reason}")
+        await ctx.message.add_reaction('✅')
+        await ctx.message.delete(delay=4)
+    
+    @delete_thread.error
+    async def delete_thread_error(self, ctx: context_type, error: discord.DiscordException):
         logging.error(error)
