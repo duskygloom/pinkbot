@@ -25,6 +25,11 @@ async def create_bot(
     bot.status = status
 
     @bot.event
+    async def on_ready():
+        for guild in bot.guilds:
+            await guild.system_channel.send("Hi I'm online now.")
+
+    @bot.event
     async def on_member_join(member: discord.Member):
         await member.guild.system_channel.send(f"Welcome {get_member_name(member)}!")
         await member.guild.system_channel.send(get_gif_url("welcome funny", get_member_name(member)))
