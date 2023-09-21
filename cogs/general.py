@@ -140,8 +140,6 @@ class General(commands.Cog):
         thread_id = ctx.channel.id
         await ctx.channel.delete()
         logging.info(f"Deleted thread: {thread_id}\nReason: {reason}")
-        await ctx.message.add_reaction('✅')
-        await ctx.message.delete(delay=4)
     
     @delete_thread.error
     async def delete_thread_error(self, ctx: context_type, error: discord.DiscordException):
