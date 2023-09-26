@@ -1,4 +1,4 @@
-import discord, json, requests, random, logging, os
+import discord, json, requests, random, os
 
 try:
     from secret import tenor_api_key

@@ -20,7 +20,7 @@ class Gifs(commands.Cog):
         topic = topic.strip()
         url = get_gif_url(topic, get_member_name(ctx.author))
         if url == "":
-            await ctx.reply("Could not find any gifs of that topic.")
+            await ctx.reply("Could not find any gifs of that topic.", mention_author=False)
             return
         if recipent is not None:
             await ctx.send(recipent.mention)
