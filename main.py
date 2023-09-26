@@ -1,12 +1,12 @@
-import logging, asyncio, bot, sys
+import logging, asyncio, bot, sys, os
 
 try:
     from secret import bot_token
 except ModuleNotFoundError:
-    import os
-    bot_token = os.getenv("PINKBOT_TOKEN")
+    token_env = "PINKBOT_DISCORD_TOKEN"
+    bot_token = os.getenv(token_env)
     if bot_token is None:
-        logging.error("No token found.")
+        logging.error(f"Token not found. Try setting the value of {token_env} environment variable.")
         sys.exit(0)
 
 if __name__ == "__main__":
