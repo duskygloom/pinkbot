@@ -4,7 +4,7 @@ try:
     from secret import bot_token
 except ModuleNotFoundError:
     import os
-    bot_token = os.getenv("DISCORD_TOKEN")
+    bot_token = os.getenv("PINKBOT_TOKEN")
     if bot_token is None:
         logging.error("No token found.")
         sys.exit(0)
