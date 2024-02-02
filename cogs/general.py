@@ -1,146 +1,92 @@
-import typing, asyncio, datetime, logging, discord
+import asyncio
+import discord
+
+from discord import app_commands
 from discord.ext import commands
 
-context_type = commands.Context
-logging.basicConfig(level=logging.INFO)
+from datetime import datetime
+
+from utils.config import get_config
+from utils.logger import get_logger
+from utils.general import is_admin
+from utils.general import is_developer
+
+logger = get_logger("cogs.general")
+config = get_config()
+
 
 class General(commands.Cog):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
 
-    @commands.command(
-            name="echo", 
-            description="Make me say anything.",
-            usage="$echo what to repeat ...",
-            brief="Repeat before me.",
-            help="The bot repeats what you say."
-    )
-    async def echo(self, ctx: context_type, *, text: str = "Hi"):
-        await ctx.reply(text, mention_author=False)
+    @app_commands.command(name="say", description="Ping pinkbot.")
+    async def echo(self, interaction: discord.Interaction):
+        await interaction.response.send_message(config["general"]["ping_message"])
 
-    @commands.command(
-            name="request", 
-            description="Need something else? Ask it, maybe I can help.",
-            usage="$request feature continues ...",
-            brief="Request for a new feature.",
-            help="Ask the developers for a new feature."
-    )
-    async def request(self, ctx: context_type, *, text: str = ""):
-        text = text.strip()
-        if text == "":
-            return
+    @app_commands.command(name="request", description="Ask for new features.")
+    async def request(self, interaction: discord.Interaction, feature: str):
         with open("feature_requests.txt", "a") as f:
-            f.write(f"{ctx.author}: {text}\n")
-        await ctx.reply("Sent your request to the developers.", mention_author=False)
-
-    @request.error
-    async def request_error(self, ctx: context_type, error: discord.DiscordException):
-        logging.error(error)
+            f.write(f"{interaction.user.name}: {feature.strip()}\n")
+        await interaction.response.send_message("Sent your request to the developers.")
     
-    @commands.command(
-            name="feedback", 
-            description="Facing any issues?",
-            usage="$feedback feedback continues ...",
-            brief="Send a feedback.",
-            help="Send a feedback to the developers."
-    )
-    async def feedback(self, ctx: context_type, *, text: str = ""):
-        with open("feedback.txt", "a") as f:
-            f.write(f"{ctx.author}: {text}\n")
-        await ctx.reply("Sent your feedback to the developers.", mention_author=False)
+    @app_commands.command(name="feedback", description="Report an issue.")
+    async def feedback(self, interaction: discord.Interaction, issue: str):
+        with open(config["general"]["feedback"], "a") as f:
+            f.write(f"{interaction.user.name}: {issue.strip()}\n")
+        await interaction.response.send_message("Sent your feedback to the developers.")
 
-    @feedback.error
-    async def feedback_error(self, ctx: context_type, error: discord.DiscordException):
-        logging.error(error)
+    @app_commands.command(name="spam", description="Pinkbot spams a message.")
+    async def spam(self, interaction: discord.Interaction, text: str, number: int):
+        if number > config["general"]["admin_spam_limit"] and is_admin(interaction.user):
+            number = config["general"]["admin_spam_limit"]
+        elif number > config["general"]["common_spam_limit"]:
+            number = config["general"]["common_spam_limit"]
+        await interaction.response.defer()
+        for _ in range(number):
+            await interaction.channel.send(text)
+            await asyncio.sleep(1)
+        await interaction.followup.send(f"Spammed {number} times.")
 
-    @commands.command(
-            name="spam",
-            description="I repeat you... but 10 times max!",
-            usage="$spam [number] what to spam",
-            brief="Spam helper.",
-            help="Repeats the text maximum of 10 times."
-    )
-    async def spam(self, ctx: context_type, number: typing.Optional[int] = 10, *words: str):
-        if not ctx.author.guild_permissions.administrator:
-            await ctx.send("Only administrators are allowed to spam!")
+    @commands.command(name="sleep", description="Pinkbot goes offline.")
+    async def sleep(self, ctx: commands.Context, reason: str = ""):
+        # only developers can shutdown in DM
+        if isinstance(ctx.channel, discord.DMChannel) and is_developer(ctx.author):
+            await ctx.reply(
+                "This command can only be executed by the developers.",
+                mention_author=False
+            )
             return
-        if len(words) == 0:
+        # only administrators can shutdown in server
+        if not is_admin(ctx.author):
+            await ctx.reply(
+                "This command can only be executed by administrators.",
+                mention_author=False
+            )
             return
-        if number > 10:
-            number = 10
-        await ctx.message.add_reaction('⏳')
-        sentence = ' '.join(words)
-        for i in range(number):
-            await ctx.send(sentence)
-            await asyncio.sleep(0.1)
-        await ctx.message.remove_reaction('⏳', member=self.bot.user)
-        await ctx.message.add_reaction('✅')
+        # actual closing
+        with open(config["general"]["sleep_reason"], "w") as f:
+            f.write(f"{datetime.now().isoformat()} -> {ctx.author}: {reason}")
+        await ctx.reply("Be right back.", mention_author=False)
+        await self.bot.close()
 
-    @spam.error
-    async def spam_error(self, ctx: context_type, error: discord.DiscordException):
-        logging.error(error)
 
-    @commands.command(
-            name="sleep",
-            description="Goodnight zzzZZZ",
-            usage="$sleep [reason for making the bot offline]",
-            brief="Bot goes offline.",
-            help="Bot goes offline."
-    )
-    async def sleep(self, ctx: context_type, *, reason: str = "No reason specified."):
-        if ctx.author.guild_permissions.administrator:
-            with open("sleep_reason.txt", "w") as f:
-                f.write(f"{datetime.datetime.now().isoformat()} -> {ctx.author}: {reason}")
-            await ctx.reply("Byee~", mention_author=False)
-            await self.bot.close()
-        else:
-            await ctx.reply("You are not an administrator.", mention_author=False)
+@app_commands.context_menu(name="Delete message.")
+async def delete_message(
+        interaction: discord.Interaction,
+        message: discord.Message
+):
+    if message.author != interaction.client.user:
+        await interaction.response.send_message(
+            "Cannot delete other people's message.",
+            ephemeral=True,
+            delete_after=1
+        )
+        return
+    await message.delete()
+    await interaction.response.send_message("Deleted.", ephemeral=True, delete_after=1)
 
-    @sleep.error
-    async def sleep_error(self, ctx: context_type, error: discord.DiscordException):
-        logging.error(error)
 
-    @commands.command(
-            name="delete",
-            description="Oops lemme delete that-",
-            usage="<reply to the message you want to unsend> $delete [reason for deleting]",
-            brief="Deletes the message you reply to.",
-            help="Deletes the message you reply to."
-    )
-    async def delete(self, ctx: context_type, *, reason: str = "No reason specified."):
-        if not ctx.author.guild_permissions.manage_messages:
-            await ctx.reply("You don't have permission to manage messages.", mention_author=False)
-            return
-        reference_id = ctx.message.reference.message_id
-        message = await ctx.channel.fetch_message(reference_id)
-        logging.info(f"Deleted message: {reference_id}\nSender: {message.content}\nContent: {message.content}\nReason: {reason}")
-        await message.delete()
-        await ctx.message.add_reaction('✅')
-        await ctx.message.delete(delay=4)
-    
-    @delete.error
-    async def delete_error(self, ctx: context_type, error: discord.DiscordException):
-        logging.error(error)
-
-    @commands.command(
-            name="delete_thread",
-            description="Cleaning up this thread.",
-            usage="$delete_thread [reason for deleting]",
-            brief="Deletes the thread where the command is executed.",
-            help="Deletes the thread where the command is executed."
-    )
-    async def delete_thread(self, ctx: context_type, *, reason: str = "No reason specified."):
-        if not ctx.author.guild_permissions.manage_threads:
-            await ctx.reply("You don't have permission to manage threads.", mention_author=False)
-            return
-        elif not isinstance(ctx.channel, discord.Thread):
-            await ctx.reply("You are not in any thread.", mention_author=False)
-            return
-        thread_id = ctx.channel.id
-        await ctx.channel.delete()
-        logging.info(f"Deleted thread: {thread_id}\nReason: {reason}")
-    
-    @delete_thread.error
-    async def delete_thread_error(self, ctx: context_type, error: discord.DiscordException):
-        logging.error(error)
+async def setup(bot: commands.Bot):
+    await bot.add_cog(General(bot))
+    bot.tree.add_command(delete_message)

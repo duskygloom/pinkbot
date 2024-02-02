@@ -1,75 +1,121 @@
-import typing, logging, discord, asyncio
-from discord.ext import commands
-from utils.onlyfans import *
+import typing
+import discord
 
-context_type = commands.Context
+from discord import app_commands
+from discord.ext import commands
+
+from utils.coomer import get_posts
+from utils.coomer import PaginationView
+from utils.coomer import get_creator_posts
+from utils.coomer import get_random_creator
+from utils.coomer import get_matching_creators
+
+homepage = "https://coomer.su"
+
+
+def check_nsfw_channel(interaction: discord.Interaction) -> bool:
+    is_dm_channel = isinstance(interaction.channel, discord.DMChannel)
+    return is_dm_channel or interaction.channel.is_nsfw()
+
 
 class NSFW(commands.Cog):
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
 
-    @commands.command(
-            name="onlyfans",
-            description="Sending onlyfans content~",
-            usage="$onlyfans [post] [timeout] 'username'",
-            brief="Sends onlyfans posts.",
-            help="Sends onlyfans post of username."
+    @app_commands.command(
+        name="random_creator",
+        description="A random onlyfans or fansly creator."
     )
-    async def onlyfans(self, ctx: context_type, post: typing.Optional[int] = 1, timeout: typing.Optional[int] = 60, *, username: str = ""):
-        await ctx.message.add_reaction('⏳')
-        if username == "":
-            username = get_random_username()
-        codes = generate_code(username, post)
-        # handling abnormal conditions
-        if codes == ScrappingStatus.username_not_found:
-            await ctx.reply(f"Could not find the user: {username}.", mention_author=False)
+    @app_commands.check(check_nsfw_channel)
+    async def random_creator(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        creator = await get_random_creator()
+        await interaction.followup.send(embed=creator.get_embed())
+    
+    @app_commands.command(
+        name="search_creator",
+        description="Search for creators."
+    )
+    @app_commands.check(check_nsfw_channel)
+    async def search_creator(
+            self,
+            interaction: discord.Interaction,
+            id: str = "",
+            name: str = "",
+            limit: int = 10,
+            offset: int = 0
+    ):
+        await interaction.response.defer()
+        creators = await get_matching_creators(id, name)
+        creators = creators[offset:offset+limit]
+        if len(creators) == 0:
+            await interaction.followup.send("No such creator found.")
             return
-        elif codes == ScrappingStatus.website_not_found:
-            await ctx.reply(f"Could not find website.", mention_author=False)
-            return
-        elif codes == ScrappingStatus.could_not_connect:
-            await ctx.reply(f"Could not connect to the website.", mention_author=False)
-            return
-        await ctx.message.remove_reaction('⏳', member=self.bot.user)
-        await ctx.message.add_reaction('😇')
-        # yielding codes
-        try:
-            keep_running = True
-            check_reaction = lambda reaction, member:  reaction.emoji in ['⏹️', '▶️'] and member == ctx.author
-            thread = await ctx.channel.create_thread(name=username, type=discord.ChannelType.private_thread, )
-            while keep_running:
-                code = next(codes)
-                videos, images = get_post(username, code)
-                # sending messages to private thread
-                await thread.add_user(ctx.author)
-                for url in videos:
-                    await thread.send(url)
-                for url in images:
-                    await thread.send(url)
-                message: discord.Message = await thread.send(f"Found {len(videos)} videos.\nFound {len(images)} images.")
-                post_id = message.id
-                # reaction controls
-                await message.add_reaction('⏹️')
-                await message.add_reaction('▶️')
-                await asyncio.sleep(0.1)
-                await self.bot.wait_for("reaction_add", check=check_reaction, timeout=timeout)
-                message = await thread.fetch_message(post_id)
-                message_reactions = message.reactions
-                for reaction in message_reactions:
-                    has_reacted = await is_reactor(ctx.author, reaction)
-                    if has_reacted and reaction.emoji == '⏹️':
-                        keep_running = False
-                    elif has_reacted and reaction.emoji == '▶️':
-                        code = next(codes)
-        except StopIteration:
-            await ctx.reply("No more posts.", mention_author=False)
-        finally:
-            await ctx.message.remove_reaction('😇', member=self.bot.user)
-            await ctx.message.add_reaction('✅')
+        await interaction.followup.send(
+            f"Creators: 1/{len(creators)}",
+            embed=creators[0].get_embed(),
+            view=PaginationView(creators)
+        )
 
-    @onlyfans.error
-    async def onlyfans_error(self, ctx: context_type, error: discord.DiscordException):
-        logging.error(error)
-        await ctx.message.remove_reaction('😇', member=self.bot.user)
-        await ctx.message.add_reaction('✅')
+    @app_commands.command(
+        name="search_post",
+        description="Search for posts."
+    )
+    @app_commands.check(check_nsfw_channel)
+    async def search_post(
+            self,
+            interaction: discord.Interaction,
+            query: str = "",
+            limit: int = 10,
+            offset: int = 0,
+            page: int = 1
+    ):
+        await interaction.response.defer()
+        posts = await get_posts(query, page-1)
+        posts = posts[offset:offset+limit]
+        if len(posts) == 0:
+            await interaction.followup.send("No such post found.")
+            return
+        message = f"1/{len(posts)}"
+        for attachment in posts[0].attachments["path"]:
+            message += f"\n{homepage}{attachment}"
+        await interaction.followup.send(
+            content=message,
+            embed=posts[0].get_embed(),
+            view=PaginationView(posts)
+        )
+
+    @app_commands.command(
+        name="search_creator_post",
+        description="Search for posts of a creator."
+    )
+    @app_commands.check(check_nsfw_channel)
+    async def search_creator_post(
+            self,
+            interaction: discord.Interaction,
+            creator_id: str,
+            service: typing.Literal["onlyfans", "fansly"],
+            query: str = "",
+            limit: int = 10,
+            offset: int = 0,
+            page: int = 1
+    ):
+        await interaction.response.defer()
+        posts = await get_creator_posts(query, creator_id, service, page-1)
+        posts = posts[offset:offset+limit]
+        if len(posts) == 0:
+            await interaction.followup.send("No such post found.")
+            return
+        message = f"1/{len(posts)}"
+        for attachment in posts[0].attachments["path"]:
+            message += f"\n{homepage}{attachment}"
+        await interaction.followup.send(
+            content=message,
+            embed=posts[0].get_embed(),
+            view=PaginationView(posts)
+        )
+
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(NSFW(bot))

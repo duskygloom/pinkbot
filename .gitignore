@@ -1,6 +1,2 @@
-secret.py
-test.ipynb
-__pycache__
-deleted_messages.txt
-feature_requests.txt
-feedback.txt
+# hidden files
+__*

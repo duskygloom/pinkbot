@@ -1,0 +1,60 @@
+{
+	"bot": {
+		"emoji": "🥰",
+		"token": "NzYzNDY3NzgyNTUyODEzNTc4.GBHuYW.atoFEwWMEIV7CIao5QRUaBNESmWXX0eOAbARX0",
+		"prefix": "$",
+		"colour": "#82688f",
+		"greeting": "",
+		"activity": "At your service",
+		"description": "Pinkbot: server manager",
+		"client_secret": "fmwXJ-C4sIZfm1Co-Ds0YkOD9k5yxDaQ"
+	},
+
+	"roles": {
+		"emoji": {
+			"🎧": 1198212523938295908,
+			"🎮": 1198212635645198457,
+			"🖥️": 1198212846429950042,
+			"😇": 1198213080740540526
+		},
+		"channel": 1198206489505050636
+	},
+
+	"general": {
+		"feedback": "feedback.txt",
+		"ping_message": "Hi",
+		"sleep_reason": "sleep_reason.txt",
+		"admin_spam_limit": 50,
+		"common_spam_limit": 10
+	},
+
+	"version": {
+		"cogs": [
+			"cogs.nsfw",
+			"cogs.roles",
+			"cogs.general",
+			"cogs.stickers",
+			"cogs.development"
+		],
+		"config": "DEBUG",
+		"developer_id": 726149320453128284,
+		"test_guild_id": 824220902954369054
+	},
+
+	"stickers": {
+		"path": "stickers",
+		"extensions": [
+			".jpg",
+			".png",
+			".gif"
+		],
+		"giffy_api_key": "2DP3vwc8LzvYBRkXBaU6EPsSqtJkQVcc",
+		"tenor_api_key": "AIzaSyCbY_e4ReS6nPpDU_TwazGCi_XuoqAXkRo",
+		"gif_search_results": 10
+	},
+	
+	"credentials": {
+		
+		
+	}
+}

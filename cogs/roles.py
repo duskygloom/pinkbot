@@ -1,111 +1,37 @@
-import discord, logging, asyncio
-from discord.ext import commands
-from utils.general import get_member_name
+import discord
 
-context_type = commands.Context
+from discord import app_commands
+from discord.ext import commands
+
+from utils.roles import RolesView
+from utils.config import get_config
+from utils.logger import get_logger
+
+logger = get_logger("cogs.roles")
+roles_config = get_config()["roles"]
+
 
 class Roles(commands.Cog):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
-
-    @commands.command(
-            name="assign_roles", 
-            description="Assign roles to others... if you are permitted to.",
-            usage="$assign_roles member1 member2 ... role1 role2 ...",
-            brief="Assign roles to others.",
-            help="Assign roles to others, if only you are permitted to modify roles yourself."
+            
+    @app_commands.command(
+        name="send_roles",
+        description="Sends a new message for managing roles."
     )
-    async def assign_roles(
-            self, ctx: context_type, 
-            members: commands.Greedy[discord.Member], 
-            roles: commands.Greedy[discord.Role]
-    ):
-        if not ctx.author.guild_permissions.manage_roles:
-            await ctx.reply("You don't have the permission to manage roles.", mention_author=False)
+    @app_commands.default_permissions(manage_guild=True)
+    async def send_roles(self, interaction: discord.Interaction):
+        try:
+            roles_channel = await interaction.guild.fetch_channel(roles_config["channel"])
+        except discord.errors.NotFound:
+            message = f"Channel not found: {interaction.guild.name}/{roles_config['channel']}"
+            await interaction.response.send_message(message, ephemeral=True)
             return
-        for member in members:
-            for role in roles:
-                await member.add_roles(role)
-                await asyncio.sleep(0.1)
-            await ctx.reply(f"Successfully assigned role(s) to {get_member_name(member)}.", mention_author=False)
+        roles = await interaction.guild.fetch_roles()
+        message = "Select role to join or leave."
+        await roles_channel.send(message, view=RolesView(roles))
+        await interaction.response.send_message("Sent.", ephemeral=True, delete_after=1)
 
-    @assign_roles.error
-    async def assign_roles_error(self, ctx: context_type, error: discord.DiscordException):
-        if isinstance(error, commands.errors.MemberNotFound):
-            await ctx.reply("Invalid member.", mention_author=False, delete_after=5)
-        elif isinstance(error, commands.errors.RoleNotFound):
-            await ctx.reply("Invalid role.", mention_author=False, delete_after=False)
-        else:
-            logging.error(error)
-
-    @commands.command(
-            name="remove_roles", 
-            description="Removes roles from others... if you are permitted to.",
-            usage="$remove_roles member1 member2 ... role1 role2 ...",
-            brief="Removes roles from others.",
-            help="Removes roles from others, if only you are permitted to modify roles yourself."
-    )
-    async def remove_roles(
-            self, ctx: context_type, 
-            members: commands.Greedy[discord.Member], 
-            roles: commands.Greedy[discord.Role]
-    ):
-        if not ctx.author.guild_permissions.manage_roles:
-            await ctx.reply(f"You don't have the permission to manage roles.", mention_author=False)
-        for member in members:
-            for role in roles:
-                await member.remove_roles(role)
-                await asyncio.sleep(0.1)
-            await ctx.reply(f"Successfully removed role(s) from {get_member_name(member)}.", mention_author=False)            
-
-    @remove_roles.error
-    async def remove_roles_error(self, ctx: context_type, error: discord.DiscordException):
-        if isinstance(error, commands.errors.MemberNotFound):
-            await ctx.reply("Invalid member.", mention_author=False, delete_after=5)
-        elif isinstance(error, commands.errors.RoleNotFound):
-            await ctx.reply("Invalid role.", mention_author=False, delete_after=5)
-        else:
-            logging.error(error)
-
-    @commands.command(
-            name="create_roles",
-            usage="create_roles 'role 1' 'role 2' 'role 3' ...",
-            description="Let me spawn some roles real quick.",
-            brief="Creates roles of the same names.",
-            help="Creates roles of the same names."
-    )
-    async def create_roles(self, ctx: context_type, *names: str):
-        if not ctx.author.guild_permissions.manage_roles:
-            await ctx.reply("You don't have the permissions to manage roles.", mention_author=False)
-            return
-        roles = await ctx.guild.fetch_roles()
-        for name in names:
-            role_exists = False
-            for role in roles:
-                if role.name == name:
-                    role_exists = True
-                    await ctx.reply(f"Role '{name}' already exists.", mention_author=False)
-                    await asyncio.sleep(0.1)
-                    break
-            if not role_exists:
-                await ctx.guild.create_role(name=name)
-                await asyncio.sleep(0.1)
-        await ctx.message.add_reaction('✅')
-    
-    @commands.command(
-            name="delete_roles",
-            usage="delete_roles role1 role2 role3 ...",
-            description="Roles go poof.",
-            brief="Deletes the mentioned roles.",
-            help="Deletes the mentioned roles."
-    )
-    async def delete_role(self, ctx: context_type, roles: commands.Greedy[discord.Role]):
-        if not ctx.author.guild_permissions.manage_roles:
-            await ctx.reply("You don't have the permissions to manage roles.", mention_author=False)
-            return
-        for role in roles:
-            await role.delete()
-            await asyncio.sleep(0.1)
-        await ctx.message.add_reaction('✅')
-        
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Roles(bot))
