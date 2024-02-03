@@ -5,6 +5,7 @@ from discord.ext import commands
 from utils.roles import RolesView
 from utils.config import get_config
 from utils.logger import get_logger
+from utils.general import get_member_embed
 
 config = get_config()
 bot_config = config["bot"]
@@ -44,4 +45,9 @@ class Pinkbot(commands.Bot):
             if version_config["config"] == "RELEASE" and bot_config["greeting"]:
                 await guild.system_channel.send(bot_config["greeting"])
             logger.info(f"{self.user.name} reached {guild.name}.")
+
+    async def on_member_join(self, member: discord.Member):
+        channel = member.guild.system_channel
+        message = f"{bot_config['welcome_message']}, {member.mention}"
+        await channel.send(message, embed=get_member_embed(member))
             

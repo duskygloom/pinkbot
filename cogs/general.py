@@ -21,20 +21,8 @@ class General(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="say", description="Ping pinkbot.")
-    async def echo(self, interaction: discord.Interaction):
+    async def ping(self, interaction: discord.Interaction):
         await interaction.response.send_message(config["general"]["ping_message"])
-
-    @app_commands.command(name="request", description="Ask for new features.")
-    async def request(self, interaction: discord.Interaction, feature: str):
-        with open("feature_requests.txt", "a") as f:
-            f.write(f"{interaction.user.name}: {feature.strip()}\n")
-        await interaction.response.send_message("Sent your request to the developers.")
-    
-    @app_commands.command(name="feedback", description="Report an issue.")
-    async def feedback(self, interaction: discord.Interaction, issue: str):
-        with open(config["general"]["feedback"], "a") as f:
-            f.write(f"{interaction.user.name}: {issue.strip()}\n")
-        await interaction.response.send_message("Sent your feedback to the developers.")
 
     @app_commands.command(name="spam", description="Pinkbot spams a message.")
     async def spam(self, interaction: discord.Interaction, text: str, number: int):

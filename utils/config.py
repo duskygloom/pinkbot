@@ -6,7 +6,7 @@ from typing import List
 from typing import Literal
 from typing import TypedDict
 
-config_file = "config.json"
+config_file = "__config.json"
 version_config_t = Literal["DEBUG", "RELEASE"]
 
 bot_options_t = Literal[
@@ -17,7 +17,8 @@ bot_options_t = Literal[
     "greeting",
     "activity",
     "description",
-    "client_secret"
+    "client_secret",
+    "welcome_message"
 ]
 bot_subconfig_t = Dict[bot_options_t, str]
 

@@ -51,7 +51,7 @@ class Development(commands.Cog):
         for cog in version_config["cogs"]:
             await self.bot.reload_extension(cog)
             logger.debug(f"Reloaded extension: {cog}")
-        await self.respond(ctx, "Extensions loaded.")
+        await self.respond(ctx, "Extensions reloaded.")
     
     @commands.command(name="sync", description="Syncs commands.")
     @commands.check(is_developer_context)
@@ -85,9 +85,9 @@ class Development(commands.Cog):
 
     @commands.command(name="run", description="Runs runner script.")
     @commands.check(is_developer_context)
-    async def run(self, ctx: commands.Context):
+    async def run(self, ctx: commands.Context, *args):
         importlib.reload(cli)
-        await cli.runner(ctx)
+        await cli.runner(ctx, *args)
         
 
 async def setup(bot: commands.Bot):
